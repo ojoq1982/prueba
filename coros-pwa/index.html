@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Coros Cristianos</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<style>
+body { font-family: Arial; background:#f2f2f2; padding:10px; }
+h1 { text-align:center; }
+input { width:100%; padding:10px; font-size:16px; }
+.song { background:white; margin:5px 0; padding:10px; border-radius:5px; cursor:pointer; }
+#letra { white-space: pre-wrap; background:white; padding:10px; border-radius:5px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h1>📖 Coros</h1>
+<input type="text" id="search" placeholder="Buscar coro...">
+
+<div id="list"></div>
+<div id="letra"></div>
+
+<script src="songs.js"></script>
+<script>
+const list = document.getElementById("list");
+const letraDiv = document.getElementById("letra");
+const search = document.getElementById("search");
+
+function render(filter="") {
+  list.innerHTML = "";
+  letraDiv.innerHTML = "";
+  const f = filter.toLowerCase();
+
+  songs.filter(s => s.titulo.toLowerCase().includes(f))
+       .forEach(song => {
+         const div = document.createElement("div");
+         div.className = "song";
+         div.textContent = song.titulo;
+         div.onclick = () => letraDiv.textContent = song.letra;
+         list.appendChild(div);
+       });
+}
+
+search.oninput = () => render(search.value);
+render();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+
+</body>
+</html>
