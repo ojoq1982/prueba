@@ -1,119 +1,155 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Coros</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <title>Coros</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Coros">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <link rel="manifest" href="manifest.json">
 
-<style>
-* {
-  box-sizing: border-box;
-}
+    <style>
+        :root { --primary: #2e7d32; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-  background: #f2f2f2;
-}
+        body {
+            margin: 0;
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto;
+            background: #f2f2f2;
+            padding-bottom: 50px;
+        }
 
-header {
-  background: #2e7d32;
-  color: white;
-  padding: 12px;
-  text-align: center;
-  font-size: 18px;
-  position: sticky;
-  top: 0;
-}
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 40px 15px 15px 15px; /* Más padding arriba para el notch del iPhone */
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
 
-input {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: none;
-  outline: none;
-}
+        .search-container {
+            position: sticky;
+            top: 75px; /* Ajustar según el header */
+            background: #f2f2f2;
+            padding: 10px;
+            z-index: 9;
+        }
 
-#list {
-  padding: 10px;
-}
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px; /* 16px evita el zoom automático en iOS */
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
 
-.song {
-  background: white;
-  margin-bottom: 8px;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 16px;
-}
+        #list { padding: 10px; }
 
-.song:active {
-  background: #e0e0e0;
-}
+        .song {
+            background: white;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 17px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
 
-#letra {
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  margin: 10px;
-  white-space: pre-wrap;
-  line-height: 1.5;
-  font-size: 16px;
-}
+        .song:active { background: #d1d1d1; }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  font-size: 16px;
-  background: #2e7d32;
-  color: white;
-  border: none;
-  border-radius: 8px;
-}
-</style>
+        #container-letra {
+            display: none; /* Se muestra solo al elegir una canción */
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            z-index: 20;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        #letra-content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 18px;
+            margin-top: 60px;
+        }
+
+        .btn-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
-
 <body>
 
-<header>📖 Coros</header>
+<header>📖 Coros Cristianos</header>
 
-<input type="text" id="search" placeholder="Buscar coro...">
+<div class="search-container">
+    <input type="text" id="search" placeholder="Buscar por título...">
+</div>
 
 <div id="list"></div>
-<div id="letra"></div>
+
+<div id="container-letra">
+    <button class="btn-close" onclick="closeSong()">Volver</button>
+    <div id="letra-content"></div>
+</div>
 
 <script src="songs.js"></script>
 <script>
-const list = document.getElementById("list");
-const letraDiv = document.getElementById("letra");
-const search = document.getElementById("search");
+    const list = document.getElementById("list");
+    const containerLetra = document.getElementById("container-letra");
+    const letraContent = document.getElementById("letra-content");
+    const search = document.getElementById("search");
 
-function render(filter="") {
-  list.innerHTML = "";
-  letraDiv.innerHTML = "";
-  const f = filter.toLowerCase();
+    function render(filter="") {
+        list.innerHTML = "";
+        const f = filter.toLowerCase();
 
-  songs.filter(s => s.titulo.toLowerCase().includes(f))
-       .forEach(song => {
-         const div = document.createElement("div");
-         div.className = "song";
-         div.textContent = song.titulo;
-         div.onclick = () => {
-           letraDiv.textContent = song.letra;
-           window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-         };
-         list.appendChild(div);
-       });
-}
+        const filtered = songs.filter(s => s.titulo.toLowerCase().includes(f));
+        
+        filtered.forEach(song => {
+            const div = document.createElement("div");
+            div.className = "song";
+            div.textContent = song.titulo;
+            div.onclick = () => {
+                letraContent.innerHTML = `<h2>${song.titulo}</h2>${song.letra}`;
+                containerLetra.style.display = "block";
+                document.body.style.overflow = "hidden"; // Bloquea scroll fondo
+            };
+            list.appendChild(div);
+        });
+    }
 
-search.oninput = () => render(search.value);
-render();
+    function closeSong() {
+        containerLetra.style.display = "none";
+        document.body.style.overflow = "auto";
+    }
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
+    search.oninput = (e) => render(e.target.value);
+    render();
+
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("sw.js");
+        });
+    }
 </script>
-
 </body>
 </html>
